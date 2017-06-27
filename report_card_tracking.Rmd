@@ -1,0 +1,49 @@
+---
+title: "IB Report Card Analysis"
+author: "Dave Rosborough"
+date: "Nov 24, 2015"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tools)
+```
+
+The purpose of this analysis is to track students' anticipated grades and final results through their two year programme.
+
+## Loading and Preparing the Data
+
+The data is stored in two folders: `managebac` contains CSV exports for each reporting period.  `ibis` contains the CSV export from IBIS of final results.
+
+First, we load all of the CSV files from the managebac directory, and combine their results into a single data frame.
+
+```{r}
+
+datadir <- "managebac"
+datafiles <- list.files(path=datadir, pattern="*.csv", full.names=TRUE)
+term_names <- file_path_sans_ext(basename(datafiles))
+term_info <- do.call(rbind, strsplit(term_names, "-"))
+
+
+mb_data <- lapply(datafiles, read.csv, header=FALSE, skip=1, na.strings = c("NA", "N/A", "IP"), col.names=c("class_id", "student_id", "last_name", "first_name", "average", "final_grade", "current_grade", "work_habits"))
+
+mb_data <- mapply(cbind, mb_data, term = paste(term_info[,1], term_info[,2], sep="-"), SIMPLIFY=FALSE)
+
+mb_data <- do.call(rbind, mb_data)
+
+mb_data <- mb_data[!((is.na(mb_data$current_grade)) & (is.na(mb_data$work_habits))),]
+
+mb_data <- subset(mb_data, select = -c(average, final_grade))
+
+# remove section id to combine students who switched sections between years
+mb_data$class_id <- as.factor(gsub(" 0[12]$", "", mb_data$class_id))
+
+rm(term_info, datadir, datafiles, term_names)
+
+mb_data.reshaped <- reshape(mb_data, direction="wide", timevar="term", idvar=c("class_id", "student_id", "last_name", "first_name"))
+
+write.csv(mb_data.reshaped, "out.csv")
+```
+

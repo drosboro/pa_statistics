@@ -4,7 +4,7 @@ This is a collection of scripts I use to help manage student data and calculate 
 
 ## Fall
 
-
+`report_card_tracking.Rmd`: Tracks how anticipated grade correlate with final awarded grades for last year's grad class.
 
 ## Winter
 
@@ -14,7 +14,11 @@ This is a collection of scripts I use to help manage student data and calculate 
 
 `overall_average_percentage.R`: given Semester 1 and Term 3 grades, calculates overall average percentage (GPA) for students.  Used for providing data for scholarship awards.
 
+`mb_t4_gr11_grades_to_pcr.R`: takes course section info from PCR, and T4 grade 11 grades from ManageBAC, and prepares a CSV import file to bring Grade 11 IB grades into PCR at the end of the year.
+
 ## Summer
+
+`mb_final_grades_to_pcr.R`: takes course section info from PCR, student data from ManageBac, and final results from IBIS, and prepares a CSV import file to bring final IB results into PCR.
 
 `combine_absence_counts.R`: merges four separate attendance exports from PCR into a single table, and calculates per-term averages for each type of attendance record.
 
