@@ -44,5 +44,5 @@ out <- out[, c(1, 2, 7, 8, 9, 16, 15)]
 out <- rename(out, c("Student.ID"="Student_Id", "Id"="Course_id"))
 out$Marking_Period <- c(4)
 out$Mark_Type_Id <- c(11)
-out$Section <- sprintf("%02d", out$Section)
+out$Section <- sprintf("%02.f", out$Section)
 write.csv(out, "pcr_grade_import.csv", row.names=FALSE)
