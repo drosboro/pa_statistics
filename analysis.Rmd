@@ -1,0 +1,135 @@
+---
+title: "Cumulative IB Result Analysis"
+author: "Dave Rosborough"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(pander)
+```
+
+The purpose of this analysis is to compare predicted grades over the final awarded IB grades over the history of P.A.'s Diploma programme.
+
+## Loading and Preparing the Data
+
+The data is stored on the T: drive, with results from each individual year stored in a CSV file (downloaded directly from IBIS).  First, we load all of the CSV files in the appropriate directory, and combine their results into a single data frame.
+
+```{r}
+
+datadir <- "T:/IB Results/CSV Reports/"
+datafiles <- list.files(path=datadir, pattern="*.csv", full.names=TRUE)
+
+data <- lapply(datafiles, read.csv, header=FALSE, skip=2, 
+               col.names=c("year", "month", "school", "regnum", 
+                           "personalcode", "name", "category", "subject", 
+                           "level", "language", "pg", "grade", "bonus", 
+                           "total", "result", "comment")
+               )
+
+data <- do.call(rbind, data)
+
+```
+
+There will be duplicate results, as anticipated results will show up in one year, and again the following year under the students' "Diploma" results.  We will discard the Anticipated results for those students who completed the diploma.
+
+## Diploma Scores over Time
+
+```{r}
+
+dip_scores <- data[(data$category == "DIPLOMA") & !(is.na(data$total)) & (data$total > 0),]
+dip_scores[dip_scores$result == "Bilingual Diploma awarded", "result"] = "Diploma awarded"
+dip_scores$result <- factor(dip_scores$result, 
+                            levels=c("Diploma awarded", "Diploma not awarded"))
+boxplot(total~year, data=dip_scores)
+
+pander(with(dip_scores, table(year, result)))
+
+```
+
+<!-- ## Number of drops between Gr 11 and Gr 12 -->
+
+<!-- ```{r} -->
+
+<!-- ``` -->
+
+## Predicted Grades vs Awarded Grades
+
+We collect only those courses for which numerical grades were predicted and awarded.
+
+```{r}
+final_marks <- data[!is.na(data$pg) & nchar(data$pg) > 0 & !(data$category == "DIPLOMA" & data$language != "ENGLISH"),]
+core <- final_marks[grep("(TK|EE)", final_marks$level), ]
+course <- final_marks[grep("[1234567]", final_marks$pg), ]
+course <- course[grep("[1234567]", course$grade), ]
+course$pg <- as.numeric(course$pg)
+course$grade <- as.numeric(course$grade)
+
+course <- mutate(course, diff = grade - pg)
+ggplot(course, aes(x=factor(diff))) + stat_count(width = 0.5) + facet_wrap( ~ year) +
+  ggtitle("Difference between Predicted and Final Grades (Historical)") +
+  labs(x = "Final Grade minus Predicted Grade", y = "Count")
+
+```
+
+Here, we plot histograms for predicted grades for only the more commonly offered courses.
+
+```{r}
+keepers = c("FRENCH B", "BIOLOGY", "CHEMISTRY", "ENGLISH A1", "HIST.EUROPE", "MATHEMATICS", "PHYSICS", "HIST.EUROPE/ME", "ENGLISH A: Lang and Literature", "ENGLISH A: Literature")
+common <- course[course$subject %in% keepers, ]
+common$subject <- gsub("ENGLISH A.*", "ENGLISH", common$subject)
+common$subject <- gsub("HIST.EUR.*", "HISTORY", common$subject)
+common$subject <- factor(common$subject)
+
+ggplot(common, aes(x=factor(diff), group=subject)) + stat_count(width=0.5) + facet_wrap( ~ subject) +
+  ggtitle("Difference between Predicted and Final Grades (Historical)") +
+  labs(x = "Final Grade minus Predicted Grade", y = "Count")
+
+current <- common[common$year == max(common$year),]
+ggplot(current, aes(x=factor(diff), group=subject)) + stat_count(width=0.5) + facet_wrap( ~ subject) +
+  ggtitle("Difference between Predicted and Final Grades (Current Year)") +
+  labs(x = "Final Grade minus Predicted Grade", y = "Count")
+
+
+```
+
+Then, looking at core components:
+
+```{r}
+ggplot(core, aes(x=factor(grade), group=level)) + stat_count(width=0.5) + facet_wrap( ~ level) +
+  ggtitle("Distribution of Grades") +
+  labs(x = "Final Grade", y = "Count")
+
+core <- core[core$grade != "N",]
+
+pg <- factor(core$pg)
+levels(pg) <- c("5", "4", "3", "2", "1")
+core$pg <- as.numeric(pg)
+
+gr <- factor(core$grade)
+levels(gr) <- c("5", "4", "3", "2", "1")
+core$grade <- as.numeric(gr)
+
+core <- mutate(core, diff=grade - pg)
+
+ggplot(core, aes(x=factor(diff), group=level)) + stat_count(width=0.5) + facet_wrap( ~ level) +
+  ggtitle("Difference between Predicted and Final Grades") +
+  labs(x = "Final Grade minus Predicted Grade", y = "Count")
+```
+
+<!-- ## Subject Results -->
+
+<!-- ```{r} -->
+<!-- chem <- course[course$subject == "CHEMISTRY",] -->
+<!-- ggplot(chem, aes(x=factor(diff), group=year)) + stat_count(width=0.5) + facet_wrap( ~ year) + -->
+<!--   ggtitle("Chemistry by Year") + -->
+<!--   labs(x = "Final Grade minus Predicted Grade", y = "Count") -->
+
+<!-- bio <- course[course$subject == "BIOLOGY",] -->
+<!-- ggplot(chem, aes(x=factor(diff), group=year)) + stat_count(width=0.5) + facet_wrap( ~ year) + -->
+<!--   ggtitle("Biology by Year") + -->
+<!--   labs(x = "Final Grade minus Predicted Grade", y = "Count") -->
+<!-- ``` -->
+
