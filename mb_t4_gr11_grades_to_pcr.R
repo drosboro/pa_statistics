@@ -5,8 +5,9 @@ d <- read.csv("managebac_import.csv", na.strings = c("N/A", "NA"))
 
 # This file is from PCR, and lists sections, short codes, and IDs.
 secs <- read.csv("pcr_courses.csv", stringsAsFactors = FALSE)
-secs$Id <- as.character(secs$Id)
-secs <- rename(secs, c("S"="Section"))
+secs$Id <- as.character(secs$Course.Id)
+# secs <- rename(secs, c("S"="Section"))
+secs <- rename(secs, c("Short.Course.Name"="Short"))
 secs <- secs[!is.na(secs["Section"]), c("Section", "Short", "Id")]
 secs$Class.ID <- as.factor(paste(secs$Short, sprintf("%02d", secs$Section), sep = " "))
 secs <- secs[,c(1, 3, 4)]
@@ -30,5 +31,6 @@ out$Mark_Type_Id <- c(11)
 out$Section <- sprintf("%02d", out$Section)
 out <- out[,c(1, 3, 2, 5, 6, 4)]
 out <- arrange(out, Course_id, Section)
+out <- unique(out)
 write.csv(out, "pcr_grade_import.csv", row.names=FALSE)
 # Student_Id  Course_id	Section	Marking_Period	Mark_Type_Id	Mark	Gradebook_Mark	Gradebook_Letter_Mark	Current_GB_Mark	Current_GB_Letter_Mark
