@@ -52,14 +52,14 @@ marks$Course.Id.Str <- as.factor(paste(word(marks$Subject), marks$Level))
 
 # Conversion lookup table
 
-conversions <- data.frame(Current.Grade = c("1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E"), Mark = c(50, 65, 73, 80, 88, 93, 98, 100, 100, 100, 100, 100))
+conversions <- data.frame(Grade = c("1", "2", "3", "4", "5", "6", "7", "A", "B", "C", "D", "E"), Mark = c(50, 65, 73, 80, 88, 93, 98, 100, 100, 100, 100, 100))
 
 
 out <- merge(courses, secs, by="Class.ID", all.y=TRUE, all.x=TRUE)
 out$Course.Id.Str <- as.factor(paste(toupper(word(out$Subject)), out$Level))
 out <- rename(out, c("Student.ID"="Student_Id", "Id"="Course_id", "IBIS.Personal.Code"="Personal.code"))
 out <- merge(out, marks, by=c("Personal.code", "Course.Id.Str"))
-out <- merge(out, conversions, by="Current.Grade")
+out <- merge(out, conversions, by="Grade")
 out$Marking_Period <- c(4)
 out$Mark_Type_Id <- c(11)
 out$Gradebook_Mark <- c("")
@@ -75,4 +75,4 @@ out <- arrange(out, Student_Id)
 
 # out <- out[, c(1, 2, 7, 8, 9, 16, 15)]
 out$Section <- sprintf("%02.f", out$Section)
-write.csv(out, "pcr_grade_import.csv", row.names=FALSE)
+write.csv(out, "ib_final_grade_pcr_import.csv", row.names=FALSE)
